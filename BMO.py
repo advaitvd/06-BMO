@@ -2,7 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 class BMO:
-    def __init__(self, cost_fn, n_vars, population_size=100, max_generations=100, ub=1, lb=0):
+    def __init__(self, cost_fn, n_vars, population_size=100, max_generations=100, ub=1, lb=0, verbose = False):
         self.population_size = population_size
         self.n_vars = n_vars
         self.ub = ub
@@ -11,7 +11,8 @@ class BMO:
         self.society, self.fitness = self.initialize_population()
         self.max_generations = max_generations
         self.mcf = 0.9
-        
+        self.verbose = verbose
+
         self.mcfp0 = 0.1
         self.mcfpinf = 0.9
         
@@ -53,7 +54,9 @@ class BMO:
             self.fitness = self.fitness[order]
 
             self.best_, self.best_fitness_ = (self.society[0,:], self.fitness[0])
-            print("{0} : {1}".format(step, self.best_fitness_))
+            if self.verbose:
+                print("{0} : {1}".format(step, self.best_fitness_))
+            
             self.log[step-1] = self.best_fitness_
             
             # males: monogamous, polygynous and promiscuous
@@ -162,7 +165,7 @@ class BMO:
 if __name__ == '__main__':
     def func(x):
         return np.sum(np.abs(x+0.5)**2)
-    test = BMO(cost_fn=func,n_vars=4,max_generations=100, ub = 10, lb = -10)
+    test = BMO(cost_fn=func,n_vars=10,max_generations=100, ub = 10, lb = -10)
     test.run()
     test.plot_graph()
 

@@ -2,13 +2,13 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 class BMO:
-    def __init__(self, cost_fn, n_vars, population_size=100, max_generations=100, ub=1, lb=0, verbose = False):
+    def __init__(self, cost_fn, n_vars, population_size=100, max_generations=100, ub=0.99, lb=0, verbose = False, guess = 'random'):
         self.population_size = population_size
         self.n_vars = n_vars
         self.ub = ub
         self.lb = lb
         self.cost_fn = cost_fn
-        self.society, self.fitness = self.initialize_population()
+        self.society, self.fitness = self.initialize_population(guess)
         self.max_generations = max_generations
         self.mcf = 0.9
         self.verbose = verbose
@@ -18,7 +18,7 @@ class BMO:
         
         self.mu = 1e-3
         
-        self.w0 = 2.5
+        self.w0 = 2
         self.winf = 0.25
 
         # species proportions
@@ -33,8 +33,13 @@ class BMO:
 
         self.log = np.zeros((max_generations,))
 
-    def initialize_population(self):
-        population = self.lb + (self.ub - self.lb)*np.random.random(size = (self.population_size, self.n_vars))
+    def initialize_population(self,guess):
+        population = None
+        if guess == 'random':
+            population = self.lb + (self.ub - self.lb)*np.random.random(size = (self.population_size, self.n_vars))
+        else:
+            population = guess * np.ones(shape = (self.population_size, self.n_vars))
+
         fitness = np.zeros((self.population_size,))
         for i in range(self.population_size):
             fitness[i] = self.cost_fn(population[i,:])
@@ -53,6 +58,15 @@ class BMO:
             self.society = self.society[order,:]
             self.fitness = self.fitness[order]
 
+            # disturbance procedure
+            if step*10>self.max_generations:
+                self.society[0][self.society[0]<=0.015] = 0
+                self.fitness[0] = self.cost_fn(self.society[0,:])
+
+                order = self.fitness.argsort()
+                self.society = self.society[order,:]
+                self.fitness = self.fitness[order]
+
             self.best_, self.best_fitness_ = (self.society[0,:], self.fitness[0])
             if self.verbose:
                 print("{0} : {1}".format(step, self.best_fitness_))
@@ -70,7 +84,7 @@ class BMO:
 
             
             # remove the worst birds and generate promiscuous birds based on the chaotic sequence
-            promiscuous = self.lb + (self.ub - self.lb)*np.random.random(size = promiscuous.shape)
+            # promiscuous = self.lb + (self.ub - self.lb)*np.random.random(size = promiscuous.shape)
 
             # compute objective function of the promiscuous birds
             for i in range(len(promiscuous_fit)):

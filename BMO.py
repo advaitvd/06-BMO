@@ -52,22 +52,26 @@ class BMO:
         plt.show()
     
     def run(self):
+        population_log=[]
         for step in range(1,1+self.max_generations):
             # sort birds
             order = self.fitness.argsort()
             self.society = self.society[order,:]
             self.fitness = self.fitness[order]
-
+            population_log.append(self.society.copy())
             # disturbance procedure
-            if step*10>self.max_generations:
-                self.society[0][self.society[0]<=0.015] = 0
-                self.fitness[0] = self.cost_fn(self.society[0,:])
+            # if step*10>self.max_generations:
+            #     self.society[0,self.society[0]<=0.015] = 0
+            #     self.fitness[0] = self.cost_fn(self.society[0,:])
 
-                order = self.fitness.argsort()
-                self.society = self.society[order,:]
-                self.fitness = self.fitness[order]
+            #     order = self.fitness.argsort()
+            #     self.society = self.society[order,:]
+            #     self.fitness = self.fitness[order]
 
             self.best_, self.best_fitness_ = (self.society[0,:], self.fitness[0])
+            # if self.best_fitness_<1e-15:
+            #     break
+            
             if self.verbose:
                 print("{0} : {1}".format(step, self.best_fitness_))
             
@@ -174,13 +178,34 @@ class BMO:
             self.society = np.concatenate((polyandrous, parthenogetic, monogamous, polygynous, promiscuous),axis = 0)
             self.fitness = np.concatenate((polyandrous_fit, parthenogetic_fit, monogamous_fit, polygynous_fit, promiscuous_fit))
 
+        
+        return self.log,population_log
+
 
 
 if __name__ == '__main__':
     def func(x):
-        return np.sum(np.abs(x+0.5)**2)
-    test = BMO(cost_fn=func,n_vars=10,max_generations=100, ub = 10, lb = -10)
-    test.run()
-    test.plot_graph()
+        n=5
+        return n*10+np.sum(x**2-10*np.cos(2*np.pi*x))
+
+    test = BMO(cost_fn=func,n_vars=5,max_generations=1000, ub = 5.12, lb = -5.12,verbose=True)
+    error_log,population_log=test.run()
+
+    x=np.linspace(-5.12,5.12,100)
+    y=np.linspace(-5.12,5.12,100)
+    [x,y]=np.meshgrid(x,y)
+    z=10*2+x**2-10*np.cos(2*np.pi*x)+y**2-10*np.cos(np.pi*y)
+    
+    # for i in [0,4,14,29,89,999]:
+    #     plt.contour(x,y,z,10)
+    #     plt.scatter(population_log[i][:,0],population_log[i][:,1],marker='x',color='black',linewidths=2.5)
+    #     plt.savefig(f'./Rastrigin_5D_100/contour_iter_{i}.png')
+    #     plt.clf()
+    
+    # plt.plot(error_log)
+    # plt.ylabel('cost')
+    # plt.xlabel('iteration')
+    # plt.title('Convergence-5D Rastrigin Function')
+    # plt.savefig('./Rastrigin_5D_100/convergence_plot.png')
 
     print(test.best_fitness_,test.best_)
